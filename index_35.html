@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Proc&eacute;dure interne &mdash; Studeria</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+
+
+:root {
+  --purple: #7b1ad5;
+  --violet: #a155f8;
+  --light: #e8bbff;
+  --ultralight: #f5dcff;
+  --ink: #0f0038;
+  --soft: #4a4a6a;
+  --muted: #8888a8;
+  --surface: #ffffff;
+  --white: #ffffff;
+  --teal: #06B6D4;
+  --amber: #F59E0B;
+  --rose: #F43F5E;
+  --emerald: #10B981;
+  --blue: #3B82F6;
+  --border: #dbd9e1;
+  --radius: 12px;
+  --rlg: 20px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', sans-serif;
+  color: var(--ink);
+  background: var(--surface);
+  line-height: 1.75;
+}
+
+.sidebar {
+  position: fixed; top: 0; left: 0;
+  width: 280px; height: 100vh;
+  background: var(--ink);
+  padding: 24px 16px;
+  overflow-y: auto;
+  z-index: 100;
+  transition: transform .3s;
+}
+.sidebar .logo { font-size: 19px; color: #fff; font-weight: 700; }
+.sidebar .sub {
+  font-size: 10px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 2px;
+  margin: 4px 0 20px;
+}
+.nav-section {
+  font-size: 10px; color: var(--violet);
+  text-transform: uppercase; letter-spacing: 1.5px;
+  padding: 12px 13px 4px; font-weight: 700;
+}
+.sidebar a {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 13px; margin-bottom: 2px;
+  color: rgba(255,255,255,.5);
+  text-decoration: none; font-size: 12.5px; font-weight: 500;
+  border-radius: 7px; transition: .2s;
+}
+.sidebar a:hover, .sidebar a.active { background: rgba(123,26,213,.2); color: #fff; }
+.sidebar .n { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--violet); min-width: 18px; }
+.sidebar .div { height: 1px; background: rgba(255,255,255,.06); margin: 10px 0; }
+
+.toggle {
+  display: none; position: fixed; top: 12px; left: 12px; z-index: 200;
+  background: var(--purple); color: #fff; border: none;
+  border-radius: 8px; padding: 8px 12px; font-size: 18px; cursor: pointer;
+}
+
+.main { margin-left: 280px; min-height: 100vh; }
+
+.hero {
+  background: linear-gradient(135deg, #0f0038 0%, #7b1ad5 50%, #e08aff 100%);
+  padding: 80px 50px 65px;
+  position: relative; overflow: hidden;
+}
+.hero::before {
+  content: ''; position: absolute; top: -40%; right: -15%;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(123,26,213,.3), transparent 70%);
+  border-radius: 50%;
+}
+.hero::after {
+  content: ''; position: absolute; bottom: -25%; left: 8%;
+  width: 350px; height: 350px;
+  background: radial-gradient(circle, rgba(224,138,255,.15), transparent 70%);
+  border-radius: 50%;
+}
+.hero-c { position: relative; z-index: 1; max-width: 720px; }
+.badge {
+  display: inline-block;
+  background: rgba(123,26,213,.3); color: var(--light);
+  padding: 5px 14px; border-radius: 20px;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 1.2px; text-transform: uppercase;
+  margin-bottom: 18px;
+  border: 1px solid rgba(123,26,213,.4);
+}
+.hero h1 {
+  font-size: clamp(30px, 4.5vw, 48px);
+  color: #fff; font-weight: 700; line-height: 1.15;
+  margin-bottom: 14px;
+}
+.hero h1 em { color: var(--teal); font-style: normal; }
+.hero-c > p {
+  font-size: 16px; color: rgba(255,255,255,.65);
+  max-width: 560px; margin-bottom: 24px;
+}
+.hero-tags { display: flex; gap: 16px; flex-wrap: wrap; }
+.hero-tags span { display: flex; align-items: center; gap: 6px; color: rgba(255,255,255,.45); font-size: 12px; }
+.hero-tags .ic {
+  width: 28px; height: 28px;
+  background: rgba(255,255,255,.07); border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+
+.content { max-width: 840px; margin: 0 auto; padding: 50px 32px 100px; }
+
+.ch { margin-bottom: 56px; scroll-margin-top: 20px; }
+.ch-head { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.ch-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 600;
+  color: var(--purple); background: var(--light);
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 9px; flex-shrink: 0;
+}
+.ch h2 { font-size: 24px; font-weight: 700; }
+
+.card {
+  background: var(--white); border-radius: var(--rlg);
+  padding: 32px;
+  box-shadow: 0 4px 16px rgba(123,26,213,.06);
+  border: 1px solid var(--border);
+}
+.card p { margin-bottom: 14px; color: var(--soft); font-size: 15px; }
+.card p:last-child { margin-bottom: 0; }
+.card strong { color: var(--ink); font-weight: 600; }
+.card h3 {
+  font-size: 19px; font-weight: 600; color: var(--ink);
+  margin: 26px 0 10px; padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.card h3:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+.card h4 { font-size: 14px; font-weight: 700; color: var(--purple); margin: 18px 0 6px; }
+.card ul { margin: 0 0 14px 20px; color: var(--soft); font-size: 15px; }
+.card li { margin-bottom: 4px; }
+
+.analogy {
+  background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+  border-radius: var(--radius); padding: 20px 24px;
+  margin: 18px 0; border-left: 4px solid var(--amber);
+}
+.analogy .al { font-weight: 700; color: #92400E; font-size: 13px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+.analogy p { font-size: 14px; color: #78350F; margin: 0; }
+
+.prereq {
+  background: linear-gradient(135deg, #DBEAFE, #BFDBFE);
+  border-radius: var(--radius); padding: 20px 24px;
+  margin: 18px 0; border-left: 4px solid var(--blue);
+}
+.prereq .pl { font-weight: 700; color: #1E40AF; font-size: 13px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+.prereq p, .prereq li { font-size: 14px; color: #1E3A5F; margin: 0; }
+.prereq ul { list-style: none; padding: 0; margin: 6px 0 0; }
+.prereq li { padding: 4px 0 4px 20px; position: relative; }
+.prereq li::before { content: '\2611'; position: absolute; left: 0; }
+
+.warning-big {
+  background: linear-gradient(135deg, #FEE2E2, #FECACA);
+  border-radius: var(--radius); padding: 20px 24px;
+  margin: 18px 0; border-left: 4px solid var(--rose);
+}
+.warning-big .wl { font-weight: 700; color: #991B1B; font-size: 13px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+.warning-big p { font-size: 14px; color: #7F1D1D; margin: 0; }
+
+.steps { counter-reset: s; list-style: none; padding: 0; margin: 16px 0; }
+.steps li {
+  counter-increment: s; position: relative;
+  padding: 14px 14px 14px 50px; margin-bottom: 8px;
+  background: var(--white); border-radius: var(--radius);
+  border: 1px solid var(--border);
+  font-size: 14px; color: var(--soft); transition: .15s;
+}
+.steps li:hover { transform: translateX(2px); box-shadow: 0 2px 8px rgba(123,26,213,.05); }
+.steps li::before {
+  content: counter(s); position: absolute;
+  left: 12px; top: 50%; transform: translateY(-50%);
+  width: 24px; height: 24px;
+  background: var(--purple); color: #fff;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+}
+.steps li strong { color: var(--ink); }
+
+.mock {
+  background: #0f0038; border-radius: var(--radius);
+  overflow: hidden; margin: 20px 0;
+  box-shadow: 0 8px 32px rgba(0,0,0,.18);
+  border: 1px solid rgba(255,255,255,.05);
+}
+.mock-bar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 9px 12px; background: rgba(0,0,0,.3);
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+.dot { width: 8px; height: 8px; border-radius: 50%; }
+.dot.r { background: #ff5f57; }
+.dot.y { background: #ffbd2e; }
+.dot.g { background: #28c840; }
+.mock-url { margin-left: 12px; font-size: 10.5px; color: rgba(255,255,255,.3); font-family: 'JetBrains Mono', monospace; }
+.mock-body { padding: 16px; min-height: 120px; }
+
+.tw { overflow-x: auto; margin: 16px 0; border-radius: var(--radius); border: 1px solid var(--border); }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+thead { background: var(--ink); }
+thead th { padding: 11px 14px; text-align: left; color: #fff; font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: .4px; }
+tbody td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--soft); vertical-align: top; }
+tbody tr:nth-child(even) { background: var(--ultralight); }
+
+.tip { display: flex; gap: 12px; padding: 16px 20px; border-radius: var(--radius); margin: 16px 0; border-left: 4px solid; }
+.tip.info { background: #EFF6FF; border-color: var(--blue); }
+.tip.ok { background: #ECFDF5; border-color: var(--emerald); }
+.tip.warn { background: #FFFBEB; border-color: var(--amber); }
+.tip.err { background: #FFF1F2; border-color: var(--rose); }
+.tip-i { font-size: 17px; flex-shrink: 0; margin-top: 1px; }
+.tip-c { font-size: 13.5px; color: var(--soft); }
+.tip-c strong { color: var(--ink); display: block; margin-bottom: 2px; }
+
+.vg { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; margin: 16px 0; }
+.vc { background: var(--white); border-radius: var(--radius); padding: 16px; border: 1px solid var(--border); transition: .15s; }
+.vc:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(123,26,213,.07); }
+.vc .vt { font-weight: 700; color: var(--purple); font-size: 13.5px; margin-bottom: 3px; }
+.vc .vd { font-size: 12.5px; color: var(--soft); }
+.vc .ve { font-size: 11.5px; color: var(--muted); margin-top: 4px; font-style: italic; }
+
+.flow { display: flex; align-items: center; gap: 0; margin: 20px 0; flex-wrap: wrap; justify-content: center; }
+.flow-node { background: var(--white); border: 2px solid var(--border); border-radius: 14px; padding: 12px 18px; text-align: center; min-width: 120px; transition: .15s; }
+.flow-node:hover { border-color: var(--purple); box-shadow: 0 4px 14px rgba(123,26,213,.08); }
+.flow-node .fl { font-size: 22px; margin-bottom: 4px; }
+.flow-node .fn2 { font-weight: 700; font-size: 12.5px; color: var(--ink); }
+.flow-node .fd { font-size: 10.5px; color: var(--muted); }
+.flow-node.trigger { border-color: var(--emerald); background: #ECFDF5; }
+.flow-node.action { border-color: var(--blue); background: #EFF6FF; }
+.flow-node.ai { border-color: var(--purple); background: var(--ultralight); }
+.flow-arrow { font-size: 22px; color: var(--muted); padding: 0 6px; flex-shrink: 0; }
+
+.code {
+  background: #0f0038; color: #e2e8f0;
+  padding: 14px 18px; border-radius: var(--radius);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px; margin: 12px 0;
+  overflow-x: auto; line-height: 1.6;
+}
+.code .cm { color: #6b7280; }
+.code .kw { color: var(--teal); }
+.code .str { color: #fbbf24; }
+
+.annotated { background: var(--ultralight); border: 1px solid rgba(123,26,213,.1); border-radius: var(--radius); padding: 24px; margin: 18px 0; }
+.annotated .caption { font-size: 11.5px; color: var(--muted); text-align: center; margin-top: 10px; font-style: italic; }
+
+.task-list { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; padding: 16px; background: var(--ultralight); border-radius: var(--radius); }
+.task-list div { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--soft); }
+
+.footer { text-align: center; padding: 36px; color: var(--muted); font-size: 12.5px; border-top: 1px solid var(--border); margin-top: 36px; }
+
+@media (max-width: 800px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .toggle { display: block; }
+  .main { margin-left: 0; }
+  .hero { padding: 70px 20px 45px; }
+  .content { padding: 28px 16px 60px; }
+  .card { padding: 22px; }
+  .flow { flex-direction: column; }
+  .flow-arrow { transform: rotate(90deg); }
+}
+
+@media print {
+  .sidebar, .toggle, .hero { display: none !important; }
+  .main { margin-left: 0 !important; }
+  .ch { break-inside: avoid; }
+  .card { box-shadow: none !important; border: 1px solid #ddd; }
+}
+
+
+/* ================= MODELE V3 ================= */
+:root{--accent:#3B82F6;--accent-soft:#bfdbfe;--em:#FDE68A}
+.progress{position:fixed;top:0;left:0;height:3px;width:0;z-index:300;
+  background:linear-gradient(90deg,var(--purple),var(--accent));transition:width .1s linear}
+
+.sidebar .brand{display:flex;align-items:center;gap:11px;margin-bottom:20px}
+.sidebar .brand img{width:42px;height:42px;border-radius:50%;object-fit:cover;flex-shrink:0;
+  border:2px solid var(--accent);box-shadow:0 0 0 4px rgba(255,255,255,.07)}
+.sidebar .brand .bt{min-width:0}
+.sidebar .brand .logo{font-size:14.5px;line-height:1.25;margin:0}
+.sidebar .brand .sub{margin:2px 0 0;letter-spacing:.8px;font-size:9.5px;white-space:nowrap;color:var(--accent)}
+.nav-section{color:var(--accent)}
+.sidebar .n{color:var(--accent)}
+.sidebar a{position:relative}
+.sidebar a:hover,.sidebar a.active{background:rgba(255,255,255,.08);color:#fff}
+.sidebar a.active::before{content:'';position:absolute;left:0;top:6px;bottom:6px;width:3px;
+  border-radius:0 3px 3px 0;background:var(--accent)}
+
+/* --- hero --- */
+.hero{padding:58px 50px 54px;
+  background:linear-gradient(118deg,#0f0038 0%,var(--purple) 34%,var(--accent) 88%)}
+.hero::before{top:-30%;right:-10%;width:560px;height:560px;
+  background:radial-gradient(circle,rgba(59,130,246,.55),transparent 68%)}
+.hero::after{bottom:-34%;left:-8%;width:480px;height:480px;
+  background:radial-gradient(circle,rgba(59,130,246,.32),transparent 70%)}
+.hero-grid{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.5;
+  background-image:linear-gradient(rgba(255,255,255,.055) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.055) 1px,transparent 1px);
+  background-size:52px 52px;
+  -webkit-mask-image:radial-gradient(ellipse at 30% 50%,#000 10%,transparent 72%);
+  mask-image:radial-gradient(ellipse at 30% 50%,#000 10%,transparent 72%)}
+.hero-inner{position:relative;z-index:1;max-width:1120px;margin:0 auto;
+  display:flex;align-items:center;gap:44px}
+.hero-inner>.hero-c{flex:1 1 520px;min-width:0;max-width:600px}
+.hero h1 em{color:var(--em);font-style:normal}
+.hero h1{margin-bottom:12px}
+.hero-c>p{margin-bottom:18px}
+.hero-visual{flex:0 1 370px;min-width:0;position:relative;align-self:center;
+  display:flex;align-items:flex-end;justify-content:center}
+.hero-visual::before{content:'';position:absolute;left:50%;top:50%;
+  transform:translate(-50%,-50%);width:330px;height:330px;max-width:96%;
+  aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,.22),rgba(255,255,255,.06) 58%,transparent 70%);
+  border:1px solid rgba(255,255,255,.16);
+  box-shadow:inset 0 0 60px rgba(255,255,255,.10)}
+.hero-visual::after{content:'';position:absolute;left:50%;top:50%;
+  transform:translate(-50%,-50%);width:400px;height:400px;max-width:115%;
+  aspect-ratio:1;border-radius:50%;border:1px dashed rgba(255,255,255,.14);
+  animation:spin 46s linear infinite}
+.hero-visual img{position:relative;z-index:1;width:340px;max-width:100%;display:block;
+  filter:drop-shadow(0 22px 40px rgba(0,0,0,.45));animation:floaty 7s ease-in-out infinite}
+@keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+
+/* --- bandeau logos du hero --- */
+.hero-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:18px 0 22px}
+.hero-tools .hl{font-size:10px;letter-spacing:1.4px;text-transform:uppercase;
+  color:rgba(255,255,255,.82);font-weight:700;margin-right:4px}
+.hero-tools .ht{display:inline-flex;align-items:center;gap:7px;
+  background:#fff;border:1px solid rgba(255,255,255,.7);
+  border-radius:999px;padding:6px 14px 6px 10px;font-size:12.5px;font-weight:600;
+  color:#1b1040;box-shadow:0 4px 14px rgba(15,0,56,.22)}
+.hero-tools .ht svg{display:block;flex-shrink:0}
+.hero-tools .ht .ltr{box-shadow:none}
+
+/* lisibilite du bandeau d'informations */
+.hero-tags{gap:14px 20px}
+.hero-tags span{color:rgba(255,255,255,.92);font-size:12.5px;font-weight:500}
+.hero-tags .ic{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.22)}
+.badge{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.3);color:#fff}
+.hero-c>p{color:rgba(255,255,255,.88)}
+
+/* --- cartes connecteurs --- */
+.tools{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin:18px 0}
+.tool{display:flex;gap:13px;background:#fff;border:1px solid var(--border);
+  border-radius:var(--radius);padding:15px 16px;transition:.15s}
+.tool:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(123,26,213,.10)}
+.tico{width:40px;height:40px;border-radius:11px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center}
+.tname{font-size:14px;font-weight:700;color:var(--ink);display:flex;align-items:center;
+  gap:7px;flex-wrap:wrap;line-height:1.3}
+.mcp{font-size:9.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+  padding:2px 7px;border-radius:5px;background:#ECFDF5;color:#047857;border:1px solid #a7f3d0}
+.mcp.no{background:#FFF7ED;color:#9A3412;border-color:#fed7aa}
+.tdesc{font-size:12.5px;color:var(--soft);margin-top:4px;line-height:1.55}
+.ltr{display:inline-flex;align-items:center;justify-content:center;border-radius:6px;
+  color:#fff;font-weight:700;font-size:12px;font-family:'Inter',sans-serif}
+
+/* --- sommaire --- */
+.toc{margin:-18px 0 44px}
+.toc-t{font-size:11px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted);
+  font-weight:700;margin-bottom:12px}
+.toc-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:10px}
+.toc-g a{display:flex;align-items:center;gap:10px;text-decoration:none;background:#fff;
+  border:1px solid var(--border);border-radius:var(--radius);padding:11px 14px;transition:.15s}
+.toc-g a:hover{border-color:var(--accent);transform:translateY(-2px);
+  box-shadow:0 6px 18px rgba(123,26,213,.10)}
+.toc-g .tn{font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;
+  color:#fff;background:linear-gradient(135deg,var(--purple),var(--accent));border-radius:7px;
+  width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.toc-g .tt{font-size:13px;font-weight:600;color:var(--ink);line-height:1.35}
+
+/* --- chapitres --- */
+.ch{opacity:0;transform:translateY(18px);transition:opacity .5s ease,transform .5s ease}
+.ch.vis{opacity:1;transform:none}
+.ch-head{padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:22px}
+.ch-num{width:36px;height:36px;font-size:12px;color:#fff;
+  background:linear-gradient(135deg,var(--purple),var(--accent));
+  box-shadow:0 4px 12px rgba(123,26,213,.28)}
+.ch h2{font-size:25px;letter-spacing:-.3px}
+.card{box-shadow:0 6px 22px rgba(123,26,213,.07)}
+
+/* --- mascotte dans les conseils --- */
+.tip{position:relative}
+.tip-av{width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;
+  border:2px solid #fff;box-shadow:0 2px 8px rgba(15,0,56,.18)}
+
+/* --- bouton copier --- */
+.codewrap{position:relative;margin:12px 0}
+.codewrap .code{margin:0;padding-right:96px}
+.copybtn{position:absolute;top:10px;right:10px;z-index:2;cursor:pointer;
+  border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.10);color:#fff;
+  border-radius:8px;padding:5px 11px;font-size:11.5px;font-weight:600;
+  font-family:'Inter',sans-serif;transition:.15s}
+.copybtn:hover{background:rgba(255,255,255,.2)}
+.copybtn.done{background:#10B981;border-color:#10B981}
+
+/* --- quiz --- */
+.quiz{display:flex;flex-direction:column;gap:14px;margin:18px 0}
+.q{border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;background:#fff}
+.q .qq{font-size:14.5px;font-weight:700;color:var(--ink);margin-bottom:12px}
+.q .qq .qn{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);margin-right:8px}
+.q button.opt{display:block;width:100%;text-align:left;cursor:pointer;
+  background:#fff;border:1px solid var(--border);border-radius:9px;
+  padding:10px 14px;margin-bottom:7px;font-size:13.5px;color:var(--soft);
+  font-family:'Inter',sans-serif;transition:.15s}
+.q button.opt:hover{border-color:var(--accent);background:#fcfaff}
+.q button.opt.good{background:#ECFDF5;border-color:#10B981;color:#065F46;font-weight:600}
+.q button.opt.bad{background:#FFF1F2;border-color:#F43F5E;color:#9F1239}
+.q .exp{display:none;font-size:13px;color:var(--soft);background:var(--ultralight);
+  border-radius:9px;padding:11px 14px;margin-top:6px}
+.q.answered .exp{display:block}
+.qscore{font-size:13.5px;font-weight:700;color:var(--ink);background:var(--ultralight);
+  border-radius:var(--radius);padding:13px 18px;text-align:center}
+
+/* --- retour en haut --- */
+.top{position:fixed;right:22px;bottom:22px;z-index:200;width:42px;height:42px;
+  border:none;border-radius:50%;cursor:pointer;color:#fff;font-size:17px;
+  background:linear-gradient(135deg,var(--purple),var(--accent));
+  box-shadow:0 6px 18px rgba(123,26,213,.35);
+  opacity:0;pointer-events:none;transition:opacity .25s}
+.top.show{opacity:1;pointer-events:auto}
+
+@media (max-width:1100px){
+  .hero-visual{flex:0 1 280px}
+  .hero-visual img{width:260px}
+  .hero-visual::before{width:250px;height:250px}
+  .hero-visual::after{width:305px;height:305px}
+}
+@media (max-width:900px){
+  .hero{padding:64px 20px 44px}
+  .hero-inner{flex-direction:column;align-items:flex-start;gap:14px}
+  .hero-visual{flex:none;align-self:center}
+  .hero-visual img{width:230px;max-width:62vw}
+  .hero-visual::before{width:230px;height:230px}
+  .hero-visual::after{width:275px;height:275px}
+  .hero-grid{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  .hero-visual img{animation:none}
+  .ch{opacity:1;transform:none;transition:none}
+}
+@media print{.progress,.top,.copybtn{display:none!important}}
+
+.toolico{border-radius:5px;vertical-align:middle;object-fit:contain}
+.kitbox{border:1px solid var(--border);border-radius:var(--rlg);padding:18px 20px;margin:18px 0;background:var(--ultralight)}
+.kitbox .kl{font-weight:700;color:var(--purple);margin-bottom:6px}
+.kitbox ol{margin:8px 0 0 18px}.kitbox li{margin:6px 0}
+.filelink{display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:13px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 12px;text-decoration:none;color:var(--purple);word-break:break-all}
+</style>
+</head>
+<body>
+<div class="progress"></div>
+
+<button class="toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">&#9776;</button>
+
+<nav class="sidebar">
+  <div class="brand"><img src="data:image/jpeg;base64,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" alt=""><div class="bt"><div class="logo">&#128218; Agent Proc&eacute;dure interne</div><div class="sub">Kit Organisation &middot; Studeria</div></div></div>
+
+  <div class="nav-section">&#127937; D&eacute;couvrir</div>
+  <a href="#ch0"><span class="n">00</span>&Agrave; quoi sert cet agent</a>
+  <a href="#ch1"><span class="n">01</span>Ce qu'il produit</a>
+
+  <div class="div"></div>
+
+  <div class="nav-section">&#129513; Comprendre</div>
+  <a href="#ch2"><span class="n">02</span>Les 4 briques d'un agent</a>
+
+  <div class="div"></div>
+
+  <div class="nav-section">&#128295; Installer</div>
+  <a href="#ch3"><span class="n">03</span>Le prompt d'initialisation</a>
+  <a href="#ch4"><span class="n">04</span>Connecter vos outils</a>
+
+  <div class="div"></div>
+
+  <div class="nav-section">&#9889; Utiliser</div>
+  <a href="#ch5"><span class="n">05</span>Le lancer &agrave; la main</a>
+  <a href="#ch6"><span class="n">06</span>Le mettre en automatique</a>
+
+  <div class="div"></div>
+
+  <div class="nav-section">&#127891; Ma&icirc;triser</div>
+  <a href="#ch7"><span class="n">07</span>Ce qu'il ne fait pas</a>
+  <a href="#ch8"><span class="n">08</span>Si &ccedil;a ne marche pas</a>
+  <a href="#ch9"><span class="n">09</span>R&eacute;cap et exercices</a>
+  <a href="#ch10"><span class="n">10</span>Quiz de fin</a>
+</nav>
+
+<div class="main">
+
+<div class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-inner">
+  <div class="hero-c">
+    <span class="badge">&#128214; Guide agent Studeria &middot; D&eacute;butant</span>
+    <h1>Votre agent de <em>proc&eacute;dure interne</em></h1>
+    <p>Vous racontez le geste, il &eacute;crit la proc&eacute;dure et pose les questions que votre r&eacute;cit laisse en suspens&nbsp;: d&eacute;clencheur, pr&eacute;alables, &eacute;tapes num&eacute;rot&eacute;es, cas particuliers, crit&egrave;re de r&eacute;ussite. Il n'invente jamais une &eacute;tape manquante.</p>
+    <div class="hero-tools"><span class="hl">Se branche avec</span><span class="ht"><img class="toolico" src="data:image/png;base64,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" width="18" height="18" alt="">Google Drive</span><span class="ht"><img class="toolico" src="data:image/png;base64,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" width="18" height="18" alt="">Notion</span><span class="ht"><img class="toolico" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAACM0lEQVR4nO3cMW5TQRSF4TMzjyjBiRFFvABaJCRKpCCLHVClYgfsAYVFsAI6U1FCg6JEoo9EywZSIBw5cay8uSkghWUKm+bXwPnaae7ot+dpmknTl49CjYhQP9zKZbqopw8+fn8e43F3dHSsty908+aTTrZ3dXA9Uy+p0LOuK9MD/O8cAOYAMAeAOQDMAWAOAHMAmAPAHADmADAHgDkAzAFgDgBzAJgDwBwA5gAwB4A5AMwBYA4AcwCYA8AcAOYAMAeAOQDMAWAOAHMAmAPAHADmADAHgDkAzAFgDgBzAJgDwBwA1kWop4fYwN2sdWUlVEPqk9Q38/aCpG64lZt5V6FWFd3L0qLfW1lM2tsZqKhXSc3sSOqmi3pKD7GBOszKOaUzSdJoFI/Pf68kfb2aaXY9V1X4aLU1pRiPO3qIjY2OI31Y/nZNJirf9pWokf5W0pdoL8C5QodpKUBMVNRgAIMlvf9xQg+xgaqdYdZ8eqZXD19rEiWUlA7Vx2e907ae6FJVqZ2PcKf7wwN6iLXVG2mQpasYSNLSkRN6pl09Vaip62Wny59tXcRyKVK6WFkJXWimXvO23ozrlBq6tkRISkV/+o3/Onbu9tLMnhr6s/6bHADmADAHgDkAzAFgDgBzAJgDwBwA5gAwB4A5AMwBYA4AcwCYA8AcAOYAMAeAOQDMAWAOAHMAmAPAHADmADAHgDkAzAFgDgBzAJgDwBwA5gAwB4A5AMwBYA4AcwCYA8AcAHYLYOlm1RkSAKIAAAAASUVORK5CYII=" width="18" height="18" alt="">Microsoft 365</span></div>
+    <div class="hero-tags"><span><span class="ic">&#127919;</span>Aucun pr&eacute;requis technique</span><span><span class="ic">&#9203;</span>15 minutes de lecture</span><span><span class="ic">&#10067;</span>Il questionne, il n'invente pas</span><span><span class="ic">&#129302;</span>Kit Organisation</span></div>
+  </div>
+  <div class="hero-visual"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzNDAgMzgwIiB3aWR0aD0iMzQwIiBoZWlnaHQ9IjM4MCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJVbiByZWNpdCBwYXJsZSB0cmFuc2Zvcm1lIGVuIHByb2NlZHVyZSBudW1lcm90ZWUgYXZlYyB1bmUgcXVlc3Rpb24gc3VyIGwgZXRhcGUgbWFucXVhbnRlIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iY2FyZCIgeDE9IjAiIHkxPSIwIiB4Mj0iMCIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmZmZmZmYiIHN0b3Atb3BhY2l0eT0iLjk4Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI2Y1ZGNmZiIgc3RvcC1vcGFjaXR5PSIuOSIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxmaWx0ZXIgaWQ9InNoIiB4PSItNDAlIiB5PSItNDAlIiB3aWR0aD0iMTgwJSIgaGVpZ2h0PSIxODAlIj4KICAgICAgPGZlRHJvcFNoYWRvdyBkeD0iMCIgZHk9IjkiIHN0ZERldmlhdGlvbj0iMTAiIGZsb29kLWNvbG9yPSIjMGYwMDM4IiBmbG9vZC1vcGFjaXR5PSIuMzQiLz4KICAgIDwvZmlsdGVyPgogIDwvZGVmcz4KCiAgPCEtLSBsZSByZWNpdCBwYXJsZSAtLT4KICA8ZyBmaWx0ZXI9InVybCgjc2gpIj4KICAgIDxyZWN0IHg9IjE0IiB5PSIxNCIgd2lkdGg9IjMxMiIgaGVpZ2h0PSI3MiIgcng9IjEyIiBmaWxsPSIjN2IxYWQ1Ii8+CiAgPC9nPgogIDxnIGZvbnQtZmFtaWx5PSJJbnRlcixzeXN0ZW0tdWksc2Fucy1zZXJpZiI+CiAgICA8dGV4dCB4PSIzMCIgeT0iMzgiIGZvbnQtc2l6ZT0iOSIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iI2U4YmJmZiI+Vk9VUyBSQUNPTlRFWjwvdGV4dD4KICAgIDx0ZXh0IHg9IjMwIiB5PSI1OCIgZm9udC1zaXplPSIxMSIgZmlsbD0iI2ZmZmZmZiI+wqsgamUgcHJlbmRzIGxlIGRvc3NpZXIsIGplIHbDqXJpZmllPC90ZXh0PgogICAgPHRleHQgeD0iMzAiIHk9Ijc0IiBmb250LXNpemU9IjExIiBmaWxsPSIjZmZmZmZmIj5sZSBtb250YW50LCBldCBhcHLDqHMgaidlbnZvaWXigKYgwrs8L3RleHQ+CiAgICA8Y2lyY2xlIGN4PSIzMDAiIGN5PSI1MCIgcj0iMTUiIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iLjE2Ii8+CiAgICA8dGV4dCB4PSIzMDAiIHk9IjU2IiBmb250LXNpemU9IjE1IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7wn5ej77iPPC90ZXh0PgogIDwvZz4KCiAgPCEtLSBmbGVjaGUgLS0+CiAgPHBhdGggZD0iTTE3MCA5MiBMMTcwIDEwNCIgc3Ryb2tlPSIjN2IxYWQ1IiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPHBhdGggZD0iTTE2NSAxMDAgTDE3MCAxMDYgTDE3NSAxMDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzdiMWFkNSIgc3Ryb2tlLXdpZHRoPSIyLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgoKICA8IS0tIGxhIHByb2NlZHVyZSBudW1lcm90ZWUgLS0+CiAgPGcgZmlsdGVyPSJ1cmwoI3NoKSI+CiAgICA8cmVjdCB4PSIxNCIgeT0iMTEyIiB3aWR0aD0iMzEyIiBoZWlnaHQ9IjE5NiIgcng9IjEyIiBmaWxsPSJ1cmwoI2NhcmQpIi8+CiAgPC9nPgogIDxnIGZvbnQtZmFtaWx5PSJJbnRlcixzeXN0ZW0tdWksc2Fucy1zZXJpZiI+CiAgICA8dGV4dCB4PSIzMCIgeT0iMTM0IiBmb250LXNpemU9IjkiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiM3YjFhZDUiPklMIMOJQ1JJVDwvdGV4dD4KCiAgICA8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgzMCwxNDYpIj4KICAgICAgPGNpcmNsZSBjeD0iOSIgY3k9IjkiIHI9IjkiIGZpbGw9IiM3YjFhZDUiLz4KICAgICAgPHRleHQgeD0iOSIgeT0iMTMiIGZvbnQtc2l6ZT0iOS41IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjZmZmZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4xPC90ZXh0PgogICAgICA8dGV4dCB4PSIyNiIgeT0iMTMiIGZvbnQtc2l6ZT0iMTEiIGZpbGw9IiMwZjAwMzgiPk91dnJpciBsZSBkb3NzaWVyIGR1IGNsaWVudDwvdGV4dD4KICAgIDwvZz4KCiAgICA8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgzMCwxNzYpIj4KICAgICAgPGNpcmNsZSBjeD0iOSIgY3k9IjkiIHI9IjkiIGZpbGw9IiM3YjFhZDUiLz4KICAgICAgPHRleHQgeD0iOSIgeT0iMTMiIGZvbnQtc2l6ZT0iOS41IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjZmZmZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4yPC90ZXh0PgogICAgICA8dGV4dCB4PSIyNiIgeT0iMTMiIGZvbnQtc2l6ZT0iMTEiIGZpbGw9IiMwZjAwMzgiPlbDqXJpZmllciBsZSBtb250YW50IGZhY3R1csOpPC90ZXh0PgogICAgPC9nPgoKICAgIDwhLS0gbCdldGFwZSBtYW5xdWFudGUgOiB1bmUgcXVlc3Rpb24sIHBhcyB1bmUgaW52ZW50aW9uIC0tPgogICAgPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzAsMjA2KSI+CiAgICAgIDxyZWN0IHg9Ii04IiB5PSItNiIgd2lkdGg9IjI4OCIgaGVpZ2h0PSIzMiIgcng9IjgiIGZpbGw9IiNGNTlFMEIiIGZpbGwtb3BhY2l0eT0iLjE2IiBzdHJva2U9IiNGNTlFMEIiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtZGFzaGFycmF5PSI0IDMiLz4KICAgICAgPGNpcmNsZSBjeD0iOSIgY3k9IjkiIHI9IjkiIGZpbGw9IiNGNTlFMEIiLz4KICAgICAgPHRleHQgeD0iOSIgeT0iMTMuNSIgZm9udC1zaXplPSIxMSIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iIzBmMDAzOCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+PzwvdGV4dD4KICAgICAgPHRleHQgeD0iMjYiIHk9IjEzIiBmb250LXNpemU9IjEwLjUiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiMwZjAwMzgiPlF1aSB2YWxpZGUgYXZhbnQgbCdlbnZvaSA/PC90ZXh0PgogICAgPC9nPgoKICAgIDxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDMwLDI0NikiPgogICAgICA8Y2lyY2xlIGN4PSI5IiBjeT0iOSIgcj0iOSIgZmlsbD0iIzdiMWFkNSIvPgogICAgICA8dGV4dCB4PSI5IiB5PSIxMyIgZm9udC1zaXplPSI5LjUiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiNmZmZmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjM8L3RleHQ+CiAgICAgIDx0ZXh0IHg9IjI2IiB5PSIxMyIgZm9udC1zaXplPSIxMSIgZmlsbD0iIzBmMDAzOCI+RW52b3llciBldCBjbGFzc2VyIGxhIGNvcGllPC90ZXh0PgogICAgPC9nPgoKICAgIDxsaW5lIHgxPSIzMCIgeTE9IjI3NiIgeDI9IjMxMCIgeTI9IjI3NiIgc3Ryb2tlPSIjZTVkNGY1IiBzdHJva2Utd2lkdGg9IjEuNSIvPgogICAgPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzAsMjg0KSI+CiAgICAgIDxjaXJjbGUgY3g9IjkiIGN5PSI5IiByPSI5IiBmaWxsPSIjMTBCOTgxIi8+CiAgICAgIDx0ZXh0IHg9IjkiIHk9IjEzIiBmb250LXNpemU9IjEwIiBmaWxsPSIjZmZmZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7inJM8L3RleHQ+CiAgICAgIDx0ZXh0IHg9IjI2IiB5PSIxMyIgZm9udC1zaXplPSIxMC41IiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjMGYwMDM4Ij5Sw6l1c3NpIDogbGEgZmFjdHVyZSBlc3QgYXUgZG9zc2llciBkdSBtb2lzPC90ZXh0PgogICAgPC9nPgogIDwvZz4KCiAgPCEtLSBsYSBsZWdlbmRlIC0tPgogIDxnIGZvbnQtZmFtaWx5PSJJbnRlcixzeXN0ZW0tdWksc2Fucy1zZXJpZiI+CiAgICA8cmVjdCB4PSIxNCIgeT0iMzIyIiB3aWR0aD0iMzEyIiBoZWlnaHQ9IjQ0IiByeD0iMTEiIGZpbGw9IiMwZjAwMzgiLz4KICAgIDx0ZXh0IHg9IjE3MCIgeT0iMzQxIiBmb250LXNpemU9IjEwIiBmb250LXdlaWdodD0iNzAwIiBmaWxsPSIjZmZmZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5VbiB0cm91IGRhbnMgbGUgcsOpY2l0PC90ZXh0PgogICAgPHRleHQgeD0iMTcwIiB5PSIzNTciIGZvbnQtc2l6ZT0iMTAiIGZpbGw9IiNlOGJiZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiPmRldmllbnQgdW5lIHF1ZXN0aW9uLCBqYW1haXMgdW5lIMOpdGFwZSBpbnZlbnTDqWU8L3RleHQ+CiAgPC9nPgo8L3N2Zz4K" alt=""></div>
+  </div>
+</div>
+
+<div class="content">
+
+<div class="toc"><div class="toc-t">Sommaire du guide</div><div class="toc-g"><a href="#ch0"><span class="tn">00</span><span class="tt">&Agrave; quoi sert cet agent</span></a><a href="#ch1"><span class="tn">01</span><span class="tt">Ce qu'il produit</span></a><a href="#ch2"><span class="tn">02</span><span class="tt">Les 4 briques d'un agent</span></a><a href="#ch3"><span class="tn">03</span><span class="tt">Le prompt d'initialisation</span></a><a href="#ch4"><span class="tn">04</span><span class="tt">Connecter vos outils</span></a><a href="#ch5"><span class="tn">05</span><span class="tt">Le lancer &agrave; la main</span></a><a href="#ch6"><span class="tn">06</span><span class="tt">Le mettre en automatique</span></a><a href="#ch7"><span class="tn">07</span><span class="tt">Ce qu'il ne fait pas</span></a><a href="#ch8"><span class="tn">08</span><span class="tt">Si &ccedil;a ne marche pas</span></a><a href="#ch9"><span class="tn">09</span><span class="tt">R&eacute;cap et exercices</span></a><a href="#ch10"><span class="tn">10</span><span class="tt">Quiz de fin</span></a></div></div>
+
+
+
+
+<!-- ===== CH 00 ===== -->
+<div class="ch" id="ch0">
+  <div class="ch-head"><span class="ch-num">00</span><h2>&Agrave; quoi sert cet agent</h2></div>
+  <div class="card">
+
+    <p>Il y a dans chaque structure une poign&eacute;e de gestes que personne n'a jamais &eacute;crits. Envoyer la facture de fin de mois, cl&ocirc;turer un dossier, pr&eacute;parer la commande du mardi. &Ccedil;a se transmet en montrant, par-dessus l'&eacute;paule, et &ccedil;a se perd exactement de la m&ecirc;me fa&ccedil;on.</p>
+    <p>Ce n'est pas de la n&eacute;gligence. &Eacute;crire une proc&eacute;dure demande de se souvenir de tout ce qu'on fait sans y penser &mdash; et c'est pr&eacute;cis&eacute;ment ce qu'on ne sait plus faire quand on ma&icirc;trise le geste depuis des ann&eacute;es.</p>
+    <p>Cet agent renverse la charge&nbsp;: <strong>vous racontez, il &eacute;crit, et il pose les questions que votre r&eacute;cit laisse en suspens.</strong> Vous n'avez pas &agrave; penser &agrave; tout&nbsp;: c'est lui qui rep&egrave;re les trous.</p>
+
+    <div class="tw">
+      <table>
+        <thead><tr><th></th><th>Sans l'agent</th><th>Avec l'agent</th></tr></thead>
+        <tbody>
+          <tr><td>&#128221; L'&eacute;criture</td><td>&laquo;&nbsp;Je le ferai quand j'aurai le temps&nbsp;&raquo;</td><td>Vingt minutes de r&eacute;cit, la proc&eacute;dure sort &agrave; la fin</td></tr>
+          <tr><td>&#128269; Les trous</td><td>D&eacute;couverts par celui qui applique, en situation</td><td>Rep&eacute;r&eacute;s pendant le r&eacute;cit, pos&eacute;s en question</td></tr>
+          <tr><td>&#128190; La transmission</td><td>Par-dessus l'&eacute;paule, quand la personne est l&agrave;</td><td>Un document qu'on relit sans vous</td></tr>
+          <tr><td>&#9989; La fin</td><td>&laquo;&nbsp;Et c'est bon, normalement&nbsp;&raquo;</td><td>Un crit&egrave;re de r&eacute;ussite &eacute;crit</td></tr>
+          <tr><td>&#128260; La mise &agrave; jour</td><td>Jamais&nbsp;: le document vieillit en silence</td><td>Une relecture trimestrielle d&eacute;clench&eacute;e toute seule</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="analogy">
+      <div class="al">&#127869;&#65039; L'analogie du plat de famille</div>
+      <p>Demandez &agrave; quelqu'un la recette d'un plat qu'il fait depuis vingt ans&nbsp;: il vous dira &laquo;&nbsp;un peu de farine, tu vois&nbsp;&raquo;. Ce n'est pas qu'il cache quelque chose, c'est que son geste a remplac&eacute; la mesure. Il faut quelqu'un en face pour demander&nbsp;: combien, &laquo;&nbsp;un peu&nbsp;&raquo;&nbsp;? C'est exactement le r&ocirc;le de cet agent.</p>
+    </div>
+
+    <div class="tip info">
+      <span class="tip-i">&#128100;</span>
+      <div class="tip-c"><strong>Pour qui c'est fait</strong>Celui qui est seul &agrave; savoir faire quelque chose, et qui le sait. Le dirigeant qui veut d&eacute;l&eacute;guer sans passer trois semaines &agrave; former. Et celui qui vient d'arriver et qui h&eacute;rite d'un poste sans mode d'emploi.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== CH 01 ===== -->
+<div class="ch" id="ch1">
+  <div class="ch-head"><span class="ch-num">01</span><h2>Ce qu'il produit</h2></div>
+  <div class="card">
+
+    <p>Un livrable&nbsp;: <strong>la proc&eacute;dure &eacute;crite</strong>. Toujours la m&ecirc;me forme, pour qu'on sache o&ugrave; regarder sans la lire en entier.</p>
+
+    <h3>La forme d'une proc&eacute;dure</h3>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Bloc</th><th>&Agrave; quoi il sert</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Le d&eacute;clencheur</strong></td><td>Ce qui fait qu'on ouvre ce document. &laquo;&nbsp;Quand un client signe&nbsp;&raquo;, pas &laquo;&nbsp;si besoin&nbsp;&raquo;.</td></tr>
+          <tr><td><strong>&Agrave; avoir sous la main</strong></td><td>Les acc&egrave;s, les fichiers, les informations &mdash; r&eacute;unis <em>avant</em> de commencer, pas cherch&eacute;s au milieu.</td></tr>
+          <tr><td><strong>Les &eacute;tapes num&eacute;rot&eacute;es</strong></td><td>Dans l'ordre r&eacute;el. Une action par &eacute;tape&nbsp;: si une &eacute;tape contient &laquo;&nbsp;et&nbsp;&raquo;, elle en cache deux.</td></tr>
+          <tr><td><strong>Les cas particuliers</strong></td><td>&Agrave; part, apr&egrave;s les &eacute;tapes. Fondus dans le fil, ils rendent le document illisible.</td></tr>
+          <tr><td><strong>Le crit&egrave;re de r&eacute;ussite</strong></td><td>&Agrave; quoi on voit que c'est fini et bien fait. C'est le bloc qu'on oublie le plus souvent.</td></tr>
+          <tr><td><strong>Qui appeler si &ccedil;a coince</strong></td><td>Une personne nomm&eacute;e. Sans &ccedil;a, celui qui bloque s'arr&ecirc;te et attend.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Le crit&egrave;re de r&eacute;ussite, le bloc qu'on saute</h3>
+    <p>Une proc&eacute;dure sans crit&egrave;re de r&eacute;ussite laisse celui qui l'applique dans le doute&nbsp;: il a suivi les &eacute;tapes, mais il ne sait pas s'il a bien fait. Il revient vous demander &mdash; et la proc&eacute;dure n'a rien &eacute;conomis&eacute;.</p>
+    <p>Un bon crit&egrave;re est v&eacute;rifiable par celui qui ex&eacute;cute, tout seul&nbsp;: &laquo;&nbsp;la facture appara&icirc;t dans le dossier du mois avec le bon num&eacute;ro&nbsp;&raquo;, et non &laquo;&nbsp;la facture est correcte&nbsp;&raquo;.</p>
+
+    <div class="tip err">
+      <span class="tip-i">&#128683;</span>
+      <div class="tip-c"><strong>Il n'invente jamais une &eacute;tape manquante</strong>Si votre r&eacute;cit saute un passage, il ne comble pas le trou avec ce qui se fait &laquo;&nbsp;en g&eacute;n&eacute;ral&nbsp;&raquo;&nbsp;: il vous pose la question. Une proc&eacute;dure compl&eacute;t&eacute;e au jug&eacute; est pire qu'une proc&eacute;dure incompl&egrave;te, parce qu'elle a l'air s&ucirc;re.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== CH 02 ===== -->
+<div class="ch" id="ch2">
+  <div class="ch-head"><span class="ch-num">02</span><h2>Les 4 briques d'un agent</h2></div>
+  <div class="card">
+
+    <p>Un agent n'est pas une bo&icirc;te noire. Il est fait de quatre pi&egrave;ces, et chacune a un r&ocirc;le pr&eacute;cis. Comprendre ces quatre pi&egrave;ces, c'est comprendre les trois agents du kit Organisation.</p>
+
+    <div class="vg">
+      <div class="vc">
+        <div class="vt">&#128220; Le skill</div>
+        <div class="vd">La proc&eacute;dure de l'agent lui-m&ecirc;me. Ici&nbsp;: faire raconter, rep&eacute;rer les trous, poser les questions une &agrave; une, mettre en forme.</div>
+        <div class="ve">Ici&nbsp;: &eacute;couter, questionner, structurer</div>
+      </div>
+      <div class="vc">
+        <div class="vt">&#128214; Le contexte</div>
+        <div class="vd">Le fichier contexte-agent.md. Votre activit&eacute;, la taille de l'&eacute;quipe, qui fait quoi, o&ugrave; vivent les proc&eacute;dures, les outils du quotidien.</div>
+        <div class="ve">Ex&nbsp;: &laquo;&nbsp;agence de 6 personnes, proc&eacute;dures dans Notion&nbsp;&raquo;</div>
+      </div>
+      <div class="vc">
+        <div class="vt">&#128268; Le connecteur</div>
+        <div class="vd">Le branchement vers l'endroit o&ugrave; la proc&eacute;dure doit vivre une fois &eacute;crite. Une proc&eacute;dure rang&eacute;e nulle part n'existe pas.</div>
+        <div class="ve">Ex&nbsp;: votre stockage de fichiers, votre base de notes</div>
+      </div>
+      <div class="vc">
+        <div class="vt">&#9203; La t&acirc;che programm&eacute;e</div>
+        <div class="vd">Le d&eacute;clencheur. Ici elle fait deux choses&nbsp;: rep&eacute;rer ce qui m&eacute;riterait d'&ecirc;tre &eacute;crit, et signaler ce qui a vieilli.</div>
+        <div class="ve">Ex&nbsp;: chaque lundi &agrave; 9h</div>
+      </div>
+    </div>
+
+    <div class="flow">
+      <div class="flow-node trigger"><div class="fl">&#128483;&#65039;</div><div class="fn2">Vous racontez</div><div class="fd">Le geste r&eacute;el</div></div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-node ai"><div class="fl">&#10067;</div><div class="fn2">Il questionne</div><div class="fd">Les trous du r&eacute;cit</div></div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-node"><div class="fl">&#128221;</div><div class="fn2">La proc&eacute;dure</div><div class="fd">Num&eacute;rot&eacute;e</div></div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-node action"><div class="fl">&#128193;</div><div class="fn2">Rang&eacute;e</div><div class="fd">L&agrave; o&ugrave; l'&eacute;quipe regarde</div></div>
+    </div>
+
+    <div class="analogy">
+      <div class="al">&#127869;&#65039; L'analogie de la recette</div>
+      <p>Le <strong>skill</strong>, c'est la fa&ccedil;on de mener l'entretien. Le <strong>contexte</strong>, c'est savoir chez qui on est&nbsp;: une &eacute;quipe de trois ou de trente, &ccedil;a ne produit pas la m&ecirc;me proc&eacute;dure. Les <strong>connecteurs</strong>, c'est le classeur o&ugrave; la fiche atterrit. La <strong>t&acirc;che programm&eacute;e</strong>, c'est le minuteur qui rappelle de v&eacute;rifier que la recette est encore la bonne.</p>
+    </div>
+
+    <div class="tip warn">
+      <span class="tip-i">&#9889;</span>
+      <div class="tip-c"><strong>La brique qu'on oublie, c'est le connecteur</strong>Une proc&eacute;dure parfaite dans une conversation Claude ne sert personne. Ce qui compte, c'est qu'elle finisse l&agrave; o&ugrave; votre &eacute;quipe a d&eacute;j&agrave; le r&eacute;flexe de regarder. Si personne n'ouvre jamais ce dossier, changez de dossier avant d'&eacute;crire.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== CH 03 ===== -->
+<div class="ch" id="ch3">
+  <div class="ch-head"><span class="ch-num">03</span><h2>Le prompt d'initialisation</h2></div>
+  <div class="card">
+    <div class="kitbox">
+      <div class="kl">&#128230; Un kit agent, c'est deux &eacute;l&eacute;ments</div>
+      <ol>
+        <li><strong>Le fichier d'instructions</strong> &mdash; il contient tout&nbsp;: les connecteurs &agrave; brancher, les comp&eacute;tences &agrave; cr&eacute;er, les t&acirc;ches programm&eacute;es. Vous le t&eacute;l&eacute;chargez et vous le d&eacute;posez dans la conversation.</li>
+        <li><strong>Le prompt d'initialisation</strong> &mdash; une seule phrase, qui dit &agrave; Claude de lire ce fichier et d'installer l'agent.</li>
+      </ol>
+    </div>
+
+    <h3>1. T&eacute;l&eacute;chargez le fichier d'instructions</h3>
+    <p><a class="filelink" href="https://drive.google.com/file/d/1SViH2pGhw_POgABOtlEcde4FqiXu36NZ/view" target="_blank" rel="noopener">&#128196; Agent-procedure-interne.md</a></p>
+    <p>Ouvrez une conversation Claude, d&eacute;posez le fichier dedans, puis collez le prompt ci-dessous.</p>
+
+    <h3>2. Collez le prompt d'initialisation</h3>
+    <div class="codewrap"><button class="copybtn" type="button">Copier</button><div class="code">
+Lis le fichier Agent-procedure-interne.md que je viens de te d&eacute;poser, et installe l'agent. Dans l'ordre&nbsp;: connecte les MCP qu'il liste, cr&eacute;e les skills qu'il d&eacute;crit en commen&ccedil;ant par le d&eacute;marrage, puis cr&eacute;e les t&acirc;ches programm&eacute;es. Pour chaque &eacute;l&eacute;ment, annonce ce que tu vas faire et attends mon accord avant de cr&eacute;er. S'il manque une information que le fichier ne contient pas, pose-moi la question, une &agrave; la fois, et n'invente aucune valeur. Quand tout est en place, fais-moi un r&eacute;capitulatif de ce qui est connect&eacute;, de ce qui a &eacute;t&eacute; cr&eacute;&eacute;, et de ce qui reste &agrave; faire de mon c&ocirc;t&eacute;.
+    </div></div>
+
+    <div class="tip info">
+      <span class="tip-i">&#128161;</span>
+      <div class="tip-c"><strong>Pourquoi ce prompt est &eacute;crit comme &ccedil;a</strong>Il impose trois choses&nbsp;: un ordre (connecteurs, puis comp&eacute;tences, puis t&acirc;ches), votre accord avant chaque cr&eacute;ation, et l'interdiction d'inventer une valeur manquante. Sans ces trois phrases, Claude installe vite, et vous d&eacute;couvrez les erreurs plus tard.</div>
+    </div>
+
+    <h3>3. Configurez-le&nbsp;: &laquo;&nbsp;d&eacute;marre mon kit organisation&nbsp;&raquo;</h3>
+    <p>L'installation met l'agent en place. La configuration lui dit chez qui il travaille. Elle se fait <strong>une seule fois pour les trois agents du kit Organisation</strong>&nbsp;: si vous l'avez d&eacute;j&agrave; faite, passez au chapitre suivant.</p>
+
+    <div class="prep">
+      <div class="pl">&#128221; Pr&eacute;parez vos r&eacute;ponses avant de lancer</div>
+      <ul>
+        <li>Votre activit&eacute; et la taille de l'&eacute;quipe</li>
+        <li>Qui fait quoi, en une ligne par personne</li>
+        <li>O&ugrave; sont rang&eacute;es les proc&eacute;dures existantes, s'il y en a</li>
+        <li>Les t&acirc;ches que personne d'autre que vous ne sait faire</li>
+        <li>Les outils du quotidien</li>
+        <li>Ce qui ne doit jamais &ecirc;tre d&eacute;l&eacute;gu&eacute;</li>
+      </ul>
+    </div>
+
+    <div class="codewrap"><button class="copybtn" type="button">Copier</button><div class="code">
+d&eacute;marre mon kit organisation
+    </div></div>
+    <p>Les questions suivent une par une. Claude &eacute;crit ensuite <strong>contexte-agent.md</strong>, que les trois comp&eacute;tences relisent &agrave; chaque fois.</p>
+
+    <div class="tip info">
+      <span class="tip-i">&#128161;</span>
+      <div class="tip-c"><strong>La question qui compte le plus</strong>&laquo;&nbsp;Quelles t&acirc;ches personne d'autre que vous ne sait faire&nbsp;?&nbsp;&raquo; Votre r&eacute;ponse devient la liste des proc&eacute;dures &agrave; &eacute;crire en premier, par ordre de risque. C'est aussi la liste de ce qui s'arr&ecirc;te le jour o&ugrave; vous &ecirc;tes absent.</div>
+    </div>
+
+    <div class="tip err">
+      <span class="tip-i">&#128274;</span>
+      <div class="tip-c"><strong>Ne donnez jamais de mot de passe ni de cl&eacute; d'API</strong>Le kit ne vous en demandera jamais. Les connexions &agrave; vos outils se font uniquement par les &eacute;crans pr&eacute;vus pour &ccedil;a dans votre application Claude.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== CH 04 ===== -->
+<div class="ch" id="ch4">
+  <div class="ch-head"><span class="ch-num">04</span><h2>Connecter vos outils</h2></div>
+  <div class="card">
+
+    <div class="tools">
+<div class="tool"><span class="tico" style="background:#ffffff;border:1px solid var(--border)"><img class="toolico" src="data:image/png;base64,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" width="22" height="22" alt=""></span><div><div class="tname">Google Drive<span class="mcp ">MCP natif</span></div><div class="tdesc">Les proc&eacute;dures produites, rang&eacute;es dans le dossier que votre &eacute;quipe ouvre d&eacute;j&agrave;.</div></div></div><div class="tool"><span class="tico" style="background:#ffffff;border:1px solid var(--border)"><img class="toolico" src="data:image/png;base64,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" width="22" height="22" alt=""></span><div><div class="tname">Notion<span class="mcp ext">Connecteur officiel</span></div><div class="tdesc">Connecteur officiel publi&eacute; par Notion, &agrave; ajouter dans Param&egrave;tres &rsaquo; Connecteurs. Utile si vos proc&eacute;dures vivent d&eacute;j&agrave; dans une base de notes.</div></div></div><div class="tool"><span class="tico" style="background:#ffffff;border:1px solid var(--border)"><img class="toolico" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAACM0lEQVR4nO3cMW5TQRSF4TMzjyjBiRFFvABaJCRKpCCLHVClYgfsAYVFsAI6U1FCg6JEoo9EywZSIBw5cay8uSkghWUKm+bXwPnaae7ot+dpmknTl49CjYhQP9zKZbqopw8+fn8e43F3dHSsty908+aTTrZ3dXA9Uy+p0LOuK9MD/O8cAOYAMAeAOQDMAWAOAHMAmAPAHADmADAHgDkAzAFgDgBzAJgDwBwA5gAwB4A5AMwBYA4AcwCYA8AcAOYAMAeAOQDMAWAOAHMAmAPAHADmADAHgDkAzAFgDgBzAJgDwBwA1kWop4fYwN2sdWUlVEPqk9Q38/aCpG64lZt5V6FWFd3L0qLfW1lM2tsZqKhXSc3sSOqmi3pKD7GBOszKOaUzSdJoFI/Pf68kfb2aaXY9V1X4aLU1pRiPO3qIjY2OI31Y/nZNJirf9pWokf5W0pdoL8C5QodpKUBMVNRgAIMlvf9xQg+xgaqdYdZ8eqZXD19rEiWUlA7Vx2e907ae6FJVqZ2PcKf7wwN6iLXVG2mQpasYSNLSkRN6pl09Vaip62Wny59tXcRyKVK6WFkJXWimXvO23ozrlBq6tkRISkV/+o3/Onbu9tLMnhr6s/6bHADmADAHgDkAzAFgDgBzAJgDwBwA5gAwB4A5AMwBYA4AcwCYA8AcAOYAMAeAOQDMAWAOAHMAmAPAHADmADAHgDkAzAFgDgBzAJgDwBwA5gAwB4A5AMwBYA4AcwCYA8AcAHYLYOlm1RkSAKIAAAAASUVORK5CYII=" width="22" height="22" alt=""></span><div><div class="tname">Microsoft 365<span class="mcp ext">Connecteur officiel</span></div><div class="tdesc">SharePoint et OneDrive. Connecteur officiel d'Anthropic, <strong>en lecture par d&eacute;faut</strong>&nbsp;: l'&eacute;criture doit &ecirc;tre valid&eacute;e par un administrateur Microsoft Entra.</div></div></div>
+    </div>
+    <div class="tip info">
+      <span class="tip-i">&#128279;</span>
+      <div class="tip-c"><strong>Deux sortes de connecteurs, &agrave; ne pas confondre</strong><strong style="display:inline;color:inherit">MCP natif</strong>&nbsp;: d&eacute;j&agrave; dans Claude, vous l'activez en un clic (Gmail, Google Drive, Google Sheets, Google Agenda). <strong style="display:inline;color:inherit">MCP officiel</strong>&nbsp;: publi&eacute; par l'&eacute;diteur de l'outil, vous l'ajoutez vous-m&ecirc;me dans Param&egrave;tres &rsaquo; Connecteurs avec l'URL qu'il fournit. Dans les deux cas, c'est votre compte&nbsp;: l'agent ne voit que ce que votre r&ocirc;le vous autorise &agrave; voir.</div>
+    </div>
+
+    <p>Un seul connecteur suffit pour d&eacute;marrer&nbsp;: celui qui m&egrave;ne &agrave; l'endroit o&ugrave; vivent d&eacute;j&agrave; vos documents d'&eacute;quipe.</p>
+
+    <h3>Les deux cat&eacute;gories utilis&eacute;es ici</h3>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Cat&eacute;gorie</th><th>&Agrave; quoi &ccedil;a sert ici</th><th>Options courantes</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Stockage de fichiers</strong></td><td>Ranger la proc&eacute;dure, relire les anciennes</td><td>Google Drive, SharePoint, OneDrive, Nextcloud, kDrive, Dropbox</td></tr>
+          <tr><td><strong>Base de notes</strong></td><td>Y verser la proc&eacute;dure si c'est l&agrave; que l'&eacute;quipe cherche</td><td>Notion, Confluence, Outline, un wiki interne</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="tip warn">
+      <span class="tip-i">&#128269;</span>
+      <div class="tip-c"><strong>Rangez l&agrave; o&ugrave; l'on cherche d&eacute;j&agrave;</strong>La tentation est de cr&eacute;er un bel espace neuf &laquo;&nbsp;Proc&eacute;dures&nbsp;&raquo;. Le probl&egrave;me est connu&nbsp;: un endroit nouveau est un endroit que personne n'a le r&eacute;flexe d'ouvrir. Mieux vaut un dossier moins joli dans l'outil que l'&eacute;quipe a d&eacute;j&agrave; ouvert ce matin.</div>
+    </div>
+
+    <h3>Pourquoi le kit ne nomme jamais un produit</h3>
+    <p>Dans les fichiers du kit, vous croiserez <code>~~stockage</code> ou <code>~~notes</code>. Ce sont des emplacements vides, volontairement. Votre fichier de contexte fait la correspondance avec vos outils r&eacute;els.</p>
+
+  </div>
+</div>
+
+<!-- ===== CH 05 ===== -->
+<div class="ch" id="ch5">
+  <div class="ch-head"><span class="ch-num">05</span><h2>Le lancer &agrave; la main</h2></div>
+  <div class="card">
+
+    <h3>La phrase la plus courte</h3>
+    <div class="codewrap"><button class="copybtn" type="button">Copier</button><div class="code">
+&eacute;cris la proc&eacute;dure pour cl&ocirc;turer un dossier client
+    </div></div>
+    <p>Ensuite, il vous laisse raconter. Ne structurez pas&nbsp;: d&eacute;roulez comme vous le feriez devant quelqu'un qui regarde par-dessus votre &eacute;paule. C'est son travail de mettre en ordre.</p>
+
+    <h3>Les six questions qu'il vous posera</h3>
+    <div class="vg">
+      <div class="vc"><div class="vt">&#9654;&#65039; Qui d&eacute;clenche&nbsp;?</div><div class="vd">Et sur quel &eacute;v&eacute;nement. Une proc&eacute;dure sans d&eacute;clencheur n'est jamais ouverte.</div></div>
+      <div class="vc"><div class="vt">&#128203; Quelles conditions pr&eacute;alables&nbsp;?</div><div class="vd">Ce qu'il faut avoir obtenu, re&ccedil;u ou v&eacute;rifi&eacute; avant de commencer.</div></div>
+      <div class="vc"><div class="vt">&#128290; Quelles &eacute;tapes, dans quel ordre&nbsp;?</div><div class="vd">L'ordre r&eacute;el. Si deux &eacute;tapes peuvent s'inverser sans cons&eacute;quence, il le note.</div></div>
+      <div class="vc"><div class="vt">&#129309; Quels cas particuliers&nbsp;?</div><div class="vd">&laquo;&nbsp;Sauf si le client est &agrave; l'&eacute;tranger&nbsp;&raquo;. C'est l&agrave; que se cache le savoir-faire.</div></div>
+      <div class="vc"><div class="vt">&#9989; Comment on sait que c'est r&eacute;ussi&nbsp;?</div><div class="vd">Un signe v&eacute;rifiable, pas une impression.</div></div>
+      <div class="vc"><div class="vt">&#128222; Qui appeler quand &ccedil;a coince&nbsp;?</div><div class="vd">Une personne nomm&eacute;e, pas un service.</div></div>
+    </div>
+
+    <h3>Le meilleur moment pour l'appeler&nbsp;: juste apr&egrave;s avoir fait le geste</h3>
+    <p>Les d&eacute;tails qu'on oublie dans une proc&eacute;dure sont ceux qu'on vient d'ex&eacute;cuter machinalement. Lancez l'agent dans la foul&eacute;e, pendant que le geste est encore chaud&nbsp;: vous raconterez des choses qui vous auraient paru &eacute;videntes une semaine plus tard.</p>
+
+    <div class="tip info">
+      <span class="tip-i">&#128161;</span>
+      <div class="tip-c"><strong>Le test de la proc&eacute;dure&nbsp;: faites-la ex&eacute;cuter par quelqu'un d'autre</strong>Donnez-la &agrave; une personne qui ne sait pas faire, et ne r&eacute;pondez &agrave; aucune de ses questions. Chaque fois qu'elle bloque, vous tenez un trou &mdash; dites-le &agrave; l'agent, il compl&egrave;te. C'est la seule mani&egrave;re fiable de savoir si une proc&eacute;dure tient debout.</div>
+    </div>
+
+    <h3>Par o&ugrave; commencer, s'il y a tout &agrave; &eacute;crire</h3>
+    <p>Pas par la plus fr&eacute;quente&nbsp;: par <strong>celle dont l'absence co&ucirc;te le plus cher</strong>. La t&acirc;che rare que vous seul savez faire et qui tombe pendant vos cong&eacute;s passe avant la t&acirc;che quotidienne que trois personnes ma&icirc;trisent.</p>
+
+  </div>
+</div>
+
+<!-- ===== CH 06 ===== -->
+<div class="ch" id="ch6">
+  <div class="ch-head"><span class="ch-num">06</span><h2>Le mettre en automatique</h2></div>
+  <div class="card">
+
+    <p>Deux t&acirc;ches. La premi&egrave;re rep&egrave;re ce qu'il faudrait &eacute;crire, la seconde emp&ecirc;che ce qui est &eacute;crit de pourrir.</p>
+
+    <h3>La t&acirc;che du lundi &mdash; ce qui m&eacute;riterait d'&ecirc;tre &eacute;crit</h3>
+    <div class="codewrap"><button class="copybtn" type="button">Copier</button><div class="code">Cr&eacute;e une t&acirc;che programm&eacute;e chaque lundi &agrave; 9h qui me signale les t&acirc;ches r&eacute;p&eacute;titives de la semaine pass&eacute;e qui n'ont pas encore de proc&eacute;dure &eacute;crite.</div></div>
+    <p>C'est elle qui transforme l'intention &laquo;&nbsp;il faudrait qu'on &eacute;crive nos proc&eacute;dures&nbsp;&raquo; en une liste de trois lignes, chaque lundi matin.</p>
+
+    <h3>La t&acirc;che trimestrielle &mdash; ce qui a vieilli</h3>
+    <div class="codewrap"><button class="copybtn" type="button">Copier</button><div class="code">Cr&eacute;e une t&acirc;che programm&eacute;e le premier lundi de chaque trimestre qui relit les proc&eacute;dures existantes et signale celles qui n'ont pas &eacute;t&eacute; touch&eacute;es depuis plus de six mois.</div></div>
+    <p>Une proc&eacute;dure p&eacute;rim&eacute;e est plus dangereuse qu'une proc&eacute;dure absente&nbsp;: on la suit, et elle m&egrave;ne au mauvais endroit. Un outil a chang&eacute;, une &eacute;tape a disparu, un interlocuteur est parti.</p>
+
+    <h3>G&eacute;rer vos t&acirc;ches</h3>
+    <div class="vg">
+      <div class="vc"><div class="vt">&#128203; Les lister</div><div class="vd">&laquo;&nbsp;montre-moi mes t&acirc;ches programm&eacute;es&nbsp;&raquo;</div></div>
+      <div class="vc"><div class="vt">&#128336; En d&eacute;caler une</div><div class="vd">&laquo;&nbsp;passe ma t&acirc;che du lundi au vendredi&nbsp;&raquo;</div></div>
+      <div class="vc"><div class="vt">&#9199;&#65039; En suspendre une</div><div class="vd">&laquo;&nbsp;mets en pause la revue trimestrielle&nbsp;&raquo;</div></div>
+      <div class="vc"><div class="vt">&#128465;&#65039; En supprimer une</div><div class="vd">&laquo;&nbsp;supprime ma t&acirc;che du lundi&nbsp;&raquo;</div></div>
+    </div>
+
+    <div class="tip warn">
+      <span class="tip-i">&#9889;</span>
+      <div class="tip-c"><strong>Une proc&eacute;dure dat&eacute;e vaut mieux qu'une proc&eacute;dure parfaite</strong>Mettez la date de derni&egrave;re relecture en haut de chaque document. Celui qui l'ouvre sait alors ce qu'il tient&nbsp;: une proc&eacute;dure relue le mois dernier, ou un texte de deux ans &agrave; v&eacute;rifier avant de s'y fier.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== CH 07 ===== -->
+<div class="ch" id="ch7">
+  <div class="ch-head"><span class="ch-num">07</span><h2>Ce qu'il ne fait pas</h2></div>
+  <div class="card">
+
+    <p>Quatre interdits, &eacute;crits dans le fichier d'instructions. Ils ne se configurent pas.</p>
+
+    <div class="vg">
+      <div class="vc"><div class="vt">&#128683; Il n'invente aucune &eacute;tape</div><div class="vd">Un trou dans votre r&eacute;cit devient une question, jamais une &eacute;tape plausible.</div></div>
+      <div class="vc"><div class="vt">&#128683; Il ne remplit rien &agrave; votre place</div><div class="vd">Au d&eacute;marrage comme pendant l'&eacute;criture, un champ inconnu reste vide et signal&eacute;.</div></div>
+      <div class="vc"><div class="vt">&#128683; Il n'&eacute;crit aucun acc&egrave;s dans une proc&eacute;dure</div><div class="vd">Ni mot de passe, ni code, ni identifiant. Il renvoie vers le gestionnaire de mots de passe, et il l'&eacute;crit explicitement dans le document.</div></div>
+      <div class="vc"><div class="vt">&#128683; Il ne publie rien sans votre accord</div><div class="vd">Il propose, vous validez. Aucune proc&eacute;dure ne part dans le dossier d'&eacute;quipe avant &ccedil;a.</div></div>
+    </div>
+
+    <h3>Il n'observe pas votre travail</h3>
+    <p>Il n'a aucun moyen de voir comment vous faites r&eacute;ellement&nbsp;: il ne conna&icirc;t que ce que vous lui racontez. Si votre r&eacute;cit saute l'&eacute;tape que vous faites sans y penser depuis dix ans, elle ne sera pas dans la proc&eacute;dure &mdash; sauf si une de ses questions la fait remonter. D'o&ugrave; le test par quelqu'un d'autre, au chapitre 05.</p>
+
+    <div class="tip info">
+      <span class="tip-i">&#128161;</span>
+      <div class="tip-c"><strong>Et ce qu'il ne remplace pas</strong>&Eacute;crire une proc&eacute;dure ne forme personne &agrave; elle seule. Le document supprime la d&eacute;pendance &agrave; votre m&eacute;moire&nbsp;; il ne supprime pas le premier passage accompagn&eacute;. Il le raccourcit beaucoup.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== CH 08 ===== -->
+<div class="ch" id="ch8">
+  <div class="ch-head"><span class="ch-num">08</span><h2>Si &ccedil;a ne marche pas</h2></div>
+  <div class="card">
+
+    <h3>La proc&eacute;dure est trop longue&nbsp;: personne ne la lira</h3>
+    <p>C'est souvent qu'elle en contient deux. Demandez-lui&nbsp;: &laquo;&nbsp;coupe en deux proc&eacute;dures distinctes&nbsp;&raquo;. Une proc&eacute;dure qui change de d&eacute;clencheur en cours de route n'en est plus une.</p>
+
+    <h3>Il me pose trop de questions</h3>
+    <p>C'est le signe que le r&eacute;cit est rest&eacute; au niveau du r&eacute;sum&eacute;. Reprenez en racontant un cas pr&eacute;cis, une vraie fois, avec un vrai client&nbsp;: la plupart des questions tombent d'elles-m&ecirc;mes.</p>
+
+    <h3>Il reformule mes &eacute;tapes et je ne me reconnais plus</h3>
+    <p>Dites-le&nbsp;: &laquo;&nbsp;garde mes mots, m&ecirc;me si c'est moins &eacute;l&eacute;gant&nbsp;&raquo;. Dans une proc&eacute;dure interne, le vocabulaire maison vaut mieux qu'un fran&ccedil;ais soign&eacute; que personne n'emploie &agrave; l'oral.</p>
+
+    <h3>Je ne sais plus comment je fais</h3>
+    <p>Normal&nbsp;: c'est le propre d'un geste automatis&eacute;. Faites-le une fois en commentant &agrave; voix haute, ou faites-le pendant que l'agent vous pose les questions. Le geste rappelle ce que la m&eacute;moire ne retrouve plus.</p>
+
+    <h3>L'&eacute;quipe ne suit pas la proc&eacute;dure &eacute;crite</h3>
+    <p>Avant de la rappeler &agrave; l'ordre, regardez si c'est la proc&eacute;dure qui a tort. Quand tout le monde d&eacute;vie au m&ecirc;me endroit, c'est g&eacute;n&eacute;ralement que le terrain a raison. Demandez &agrave; l'agent de la corriger &agrave; partir de ce qui se fait vraiment.</p>
+
+    <h3>Le r&eacute;flexe qui r&egrave;gle le reste</h3>
+    <p>Dites-lui ce qui ne va pas, en langage courant. &laquo;&nbsp;Tu as oubli&eacute; la validation du responsable&nbsp;&raquo;, &laquo;&nbsp;l'&eacute;tape 4 vient avant la 3&nbsp;&raquo;, &laquo;&nbsp;c'est trop d&eacute;taill&eacute;, on vise quelqu'un qui conna&icirc;t le m&eacute;tier&nbsp;&raquo;. Il corrige, et si la remarque vaut toujours, demandez-lui de l'&eacute;crire dans le contexte.</p>
+
+  </div>
+</div>
+
+<!-- ===== CH 09 ===== -->
+<div class="ch" id="ch9">
+  <div class="ch-head"><span class="ch-num">09</span><h2>R&eacute;cap et exercices</h2></div>
+  <div class="card">
+
+    <h3>Ce que vous savez maintenant faire</h3>
+    <div class="vg">
+      <div class="vc"><div class="vt">&#9989; Installer l'agent</div><div class="vd">D&eacute;poser le fichier d'instructions, coller le prompt d'initialisation, valider chaque cr&eacute;ation.</div></div>
+      <div class="vc"><div class="vt">&#9989; Reconna&icirc;tre les 4 briques</div><div class="vd">Skill, contexte, connecteur, t&acirc;che programm&eacute;e.</div></div>
+      <div class="vc"><div class="vt">&#9989; Raconter plut&ocirc;t que r&eacute;diger</div><div class="vd">D&eacute;rouler le geste&nbsp;; la mise en forme n'est pas votre travail.</div></div>
+      <div class="vc"><div class="vt">&#9989; Reconna&icirc;tre une proc&eacute;dure compl&egrave;te</div><div class="vd">D&eacute;clencheur, pr&eacute;alables, &eacute;tapes, cas particuliers, crit&egrave;re de r&eacute;ussite, contact.</div></div>
+      <div class="vc"><div class="vt">&#9989; La tester pour de vrai</div><div class="vd">La faire ex&eacute;cuter par quelqu'un d'autre, sans r&eacute;pondre &agrave; ses questions.</div></div>
+      <div class="vc"><div class="vt">&#9989; Passer en automatique</div><div class="vd">Cr&eacute;er, lister, d&eacute;caler et supprimer une t&acirc;che.</div></div>
+    </div>
+
+    <h3>Exercices pratiques</h3>
+    <p>Quatre exercices de difficult&eacute; croissante.</p>
+    <div class="ex">
+      <div class="exh"><span class="exb easy">&#128994; Facile</span> &mdash; Le geste de ce matin <span class="exd">(&asymp; 20 min)</span></div>
+      <p>Prenez une t&acirc;che que vous venez de faire aujourd'hui et racontez-la &agrave; l'agent. Comptez ses questions&nbsp;: chacune est une chose que vous n'auriez pas &eacute;crite seul.</p>
+    </div>
+    <div class="ex">
+      <div class="exh"><span class="exb med">&#128993; Moyen</span> &mdash; Le test sans assistance <span class="exd">(&asymp; 30 min)</span></div>
+      <p>Donnez une proc&eacute;dure &eacute;crite &agrave; un coll&egrave;gue qui ne sait pas faire, et ne r&eacute;pondez &agrave; rien pendant qu'il l'applique. Notez chaque blocage, puis compl&eacute;tez avec l'agent.</p>
+    </div>
+    <div class="ex">
+      <div class="exh"><span class="exb hard">&#128308; Difficile</span> &mdash; La t&acirc;che &agrave; risque <span class="exd">(&asymp; 45 min)</span></div>
+      <p>Listez ce que vous seul savez faire, classez par co&ucirc;t d'une absence, et &eacute;crivez la premi&egrave;re de la liste. C'est celle qui vous rend des cong&eacute;s.</p>
+    </div>
+    <div class="ex">
+      <div class="exh"><span class="exb expl">&#128995; Exploration</span> &mdash; La proc&eacute;dure p&eacute;rim&eacute;e <span class="exd">(&asymp; 25 min)</span></div>
+      <p>Reprenez une proc&eacute;dure existante de plus d'un an et confrontez-la &agrave; la r&eacute;alit&eacute; d'aujourd'hui. L'&eacute;cart vous dit &agrave; quelle fr&eacute;quence vos proc&eacute;dures doivent &ecirc;tre relues.</p>
+    </div>
+
+    <div class="tip info">
+      <span class="tip-i">&#128640;</span>
+      <div class="tip-c"><strong>Et maintenant&nbsp;?</strong><strong style="display:inline;color:inherit">Proc&eacute;dure interne</strong> est le premier des trois agents du kit Organisation. <strong style="display:inline;color:inherit">Passation avant absence</strong> s'appuie sur ces proc&eacute;dures le jour o&ugrave; vous partez, et <strong style="display:inline;color:inherit">Diagnostic d&eacute;l&eacute;gation et automatisation</strong> vous dit lesquelles &eacute;crire en priorit&eacute;. Les trois lisent le m&ecirc;me contexte.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== QUIZ ===== -->
+<div class="ch" id="ch10">
+  <div class="ch-head"><span class="ch-num">10</span><h2>Quiz de fin</h2></div>
+  <div class="card">
+    <p>Trois questions pour v&eacute;rifier que l'essentiel est pass&eacute;. Cliquez sur la r&eacute;ponse qui vous semble juste&nbsp;: la correction s'affiche aussit&ocirc;t.</p>
+    <div class="quiz"><div class="q"><div class="qq"><span class="qn">Q1</span>Vous racontez une t&acirc;che et vous sautez une &eacute;tape sans le vouloir. Que fait l'agent&nbsp;?</div><button class="opt" type="button" data-ok="0">Il compl&egrave;te avec l'&eacute;tape la plus probable</button><button class="opt" type="button" data-ok="1">Il vous pose la question, une &agrave; la fois</button><button class="opt" type="button" data-ok="0">Il &eacute;crit la proc&eacute;dure avec un trou, sans rien dire</button><div class="exp">Il n'invente jamais une &eacute;tape pour combler un trou&nbsp;: un trou est une question pos&eacute;e. Une proc&eacute;dure compl&eacute;t&eacute;e au jug&eacute; est plus dangereuse qu'une proc&eacute;dure incompl&egrave;te, parce qu'elle a l'air s&ucirc;re.</div></div><div class="q"><div class="qq"><span class="qn">Q2</span>Quel bloc d'une proc&eacute;dure est le plus souvent oubli&eacute;&nbsp;?</div><button class="opt" type="button" data-ok="0">Les &eacute;tapes num&eacute;rot&eacute;es</button><button class="opt" type="button" data-ok="1">Le crit&egrave;re de r&eacute;ussite</button><button class="opt" type="button" data-ok="0">Le titre</button><div class="exp">Sans crit&egrave;re de r&eacute;ussite, celui qui applique la proc&eacute;dure a suivi les &eacute;tapes mais ne sait pas s'il a bien fait&nbsp;: il revient vous demander, et la proc&eacute;dure n'a rien &eacute;conomis&eacute;. Un bon crit&egrave;re est v&eacute;rifiable tout seul.</div></div><div class="q"><div class="qq"><span class="qn">Q3</span>Par quelle proc&eacute;dure commencer quand tout est &agrave; &eacute;crire&nbsp;?</div><button class="opt" type="button" data-ok="0">La plus fr&eacute;quente</button><button class="opt" type="button" data-ok="1">Celle dont l'absence co&ucirc;te le plus cher</button><button class="opt" type="button" data-ok="0">La plus courte, pour se lancer</button><div class="exp">Une t&acirc;che quotidienne que trois personnes ma&icirc;trisent ne pose pas de probl&egrave;me. La t&acirc;che rare que vous seul savez faire, et qui tombe pendant vos cong&eacute;s, si.</div></div></div>
+    <div class="qscore">Score : 0 / 0</div>
+  </div>
+</div>
+<div class="footer">
+  <p><strong>&#128218; Guide agent &mdash; Proc&eacute;dure interne</strong></p>
+  <p>Kit Organisation &middot; Formation Studeria &middot; Octobre 2026</p>
+</div>
+
+</div><!-- /content -->
+</div><!-- /main -->
+
+<button class="top" aria-label="Haut de page">&#8593;</button>
+
+<script>
+(function(){
+  var bar=document.querySelector('.progress'),top=document.querySelector('.top');
+  var links=[].slice.call(document.querySelectorAll('.sidebar a[href^="#"]'));
+  var chs=[].slice.call(document.querySelectorAll('.ch'));
+  function onScroll(){
+    var h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?window.scrollY/h*100:0)+'%';
+    top.classList.toggle('show',window.scrollY>600);
+    var cur=null;
+    chs.forEach(function(c){if(c.getBoundingClientRect().top<160)cur=c.id});
+    links.forEach(function(a){a.classList.toggle('active',a.getAttribute('href')==='#'+cur)});
+  }
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+  top.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'})});
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){
+      if(e.isIntersecting){e.target.classList.add('vis');io.unobserve(e.target)}})},
+      {rootMargin:'0px 0px -60px 0px'});
+    chs.forEach(function(c){io.observe(c)});
+  } else { chs.forEach(function(c){c.classList.add('vis')}); }
+  links.forEach(function(a){a.addEventListener('click',function(){
+    document.querySelector('.sidebar').classList.remove('open')})});
+
+  /* bouton copier */
+  document.querySelectorAll('.copybtn').forEach(function(b){
+    b.addEventListener('click',function(){
+      var code=b.parentNode.querySelector('.code');
+      var t=code.innerText.replace(/^\/\/.*\n?/,'').trim();
+      var done=function(){b.textContent='Copie !';b.classList.add('done');
+        setTimeout(function(){b.textContent='Copier';b.classList.remove('done')},2000)};
+      if(navigator.clipboard&&window.isSecureContext){
+        navigator.clipboard.writeText(t).then(done,fallback);
+      } else { fallback(); }
+      function fallback(){
+        var ta=document.createElement('textarea');ta.value=t;
+        ta.style.position='fixed';ta.style.opacity=0;document.body.appendChild(ta);
+        ta.select();try{document.execCommand('copy');done()}catch(e){}
+        document.body.removeChild(ta);
+      }
+    });
+  });
+
+  /* quiz */
+  var qz=document.querySelector('.quiz');
+  if(qz){
+    var total=qz.querySelectorAll('.q').length,good=0,done=0;
+    var sc=document.querySelector('.qscore');
+    qz.querySelectorAll('.q').forEach(function(q){
+      q.querySelectorAll('button.opt').forEach(function(b){
+        b.addEventListener('click',function(){
+          if(q.classList.contains('answered'))return;
+          q.classList.add('answered');done++;
+          var ok=b.dataset.ok==='1';if(ok)good++;
+          b.classList.add(ok?'good':'bad');
+          if(!ok)q.querySelector('button.opt[data-ok="1"]').classList.add('good');
+          if(sc)sc.textContent=done<total?('Score : '+good+' / '+done+'  \u2014  '+(total-done)+' question(s) restante(s)')
+            :('Score final : '+good+' / '+total+(good===total?'  \u2014  parfait !':'  \u2014  relisez les chapitres concernes.'));
+        });
+      });
+    });
+  }
+})();
+</script>
+
+</body>
+</html>
